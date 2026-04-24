@@ -4,38 +4,182 @@
   <meta charset="UTF-8" />
   <title>2026년 5월 근무불가일 취합</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
-    body { font-family: system-ui, sans-serif; margin: 20px; background:#f7f7f8; }
-    h1 { font-size: 22px; }
-    .box { background:white; padding:16px; border-radius:14px; margin-bottom:16px; box-shadow:0 2px 8px #0001; }
-    input { padding:10px; border:1px solid #ddd; border-radius:8px; width:220px; }
-    .calendar { display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; }
-    .day-name { text-align:center; font-weight:700; color:#666; }
-    .day {
-      min-height:90px; background:white; border-radius:12px; padding:8px;
-      border:1px solid #e4e4e7; cursor:pointer;
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 14px;
+      background: #f7f7f8;
+      color: #111827;
     }
-    .day.selected { border:2px solid #2563eb; background:#eff6ff; }
-    .date { font-weight:700; margin-bottom:6px; }
-    .names { font-size:12px; color:#444; line-height:1.4; }
-    .empty { background:transparent; border:none; cursor:default; }
-    table { width:100%; border-collapse:collapse; background:white; }
-    th, td { border-bottom:1px solid #eee; padding:10px; text-align:left; }
-    th { background:#fafafa; }
-    .hint { color:#666; font-size:13px; }
-    .danger { color: #dc2626; font-size: 14px; font-weight: 700;    /* bold */ }
+
+    h1 {
+      font-size: 20px;
+      line-height: 1.3;
+      margin: 4px 0 14px;
+    }
+
+    h2 {
+      font-size: 17px;
+      margin: 0 0 12px;
+    }
+
+    .box {
+      background: white;
+      padding: 14px;
+      border-radius: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 10px #00000010;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    input {
+      box-sizing: border-box;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      width: 100%;
+      font-size: 16px;
+    }
+
+    .hint {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 8px 0 0;
+    }
+
+    .danger {
+      color: #dc2626;
+      font-size: 14px;
+      font-weight: 700;
+      background: #fef2f2;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .day-name {
+      text-align: center;
+      font-weight: 700;
+      color: #666;
+      font-size: 12px;
+      padding: 4px 0;
+    }
+
+    .day {
+      min-height: 74px;
+      background: white;
+      border-radius: 12px;
+      padding: 6px;
+      border: 1px solid #e4e4e7;
+      cursor: pointer;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .day.selected {
+      border: 2px solid #2563eb;
+      background: #eff6ff;
+    }
+
+    .date {
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    .names {
+      font-size: 11px;
+      color: #444;
+      line-height: 1.35;
+      word-break: keep-all;
+    }
+
+    .empty {
+      background: transparent;
+      border: none;
+      cursor: default;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 420px;
+      border-collapse: collapse;
+      background: white;
+      font-size: 13px;
+    }
+
+    th, td {
+      border-bottom: 1px solid #eee;
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #fafafa;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .box {
+        padding: 12px;
+        border-radius: 14px;
+      }
+
+      .calendar {
+        gap: 4px;
+      }
+
+      .day {
+        min-height: 64px;
+        padding: 5px;
+        border-radius: 10px;
+      }
+
+      .date {
+        font-size: 12px;
+      }
+
+      .names {
+        font-size: 10px;
+      }
+    }
   </style>
 </head>
+
 <body>
   <h1>2026년 5월 근무불가일 취합</h1>
-   <div class="box">
+  <div class="box">
     <label>주의사항</label>
     <p class="danger">근무 불가일은 꼭 필요한 일정만 제출해주세요! 제출 후 전체 현황을 반영해 특정 날짜에 신청이 몰릴 경우 일부 조정될 수 있어요.</p> 
     </div>
   <div class="box">
-    <label>이름 입력: </label>
+    <label for="nameInput">이름 입력</label>
     <input id="nameInput" placeholder="예: 한주리" />
     <p class="hint">이름을 입력한 뒤 날짜를 클릭하면 근무불가일로 등록/해제됩니다.</p>
+    <p class="danger">입력한 내용은 모든 사용자가 함께 볼 수 있습니다.</p>
   </div>
 
   <div class="box">
@@ -44,22 +188,28 @@
 
   <div class="box">
     <h2>날짜별 취합표</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>날짜</th>
-          <th>근무불가 인원</th>
-          <th>명단</th>
-        </tr>
-      </thead>
-      <tbody id="summary"></tbody>
-    </table>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>날짜</th>
+            <th>근무불가 인원</th>
+            <th>명단</th>
+          </tr>
+        </thead>
+        <tbody id="summary"></tbody>
+      </table>
+    </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import {
-      getDatabase, ref, set, remove, onValue
+      getDatabase,
+      ref,
+      set,
+      remove,
+      onValue
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
 
     // Firebase 콘솔에서 발급받은 값으로 교체
@@ -71,6 +221,7 @@
     messagingSenderId: "866669831734",
     appId: "1:866669831734:web:13feb9632867811b409a97"
   };
+
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -84,6 +235,7 @@
     const nameInput = document.getElementById("nameInput");
 
     nameInput.value = localStorage.getItem("workerName") || "";
+
     nameInput.addEventListener("input", () => {
       localStorage.setItem("workerName", nameInput.value.trim());
       render();
@@ -103,6 +255,7 @@
 
     function toggleDay(day) {
       const name = nameInput.value.trim();
+
       if (!name) {
         alert("먼저 이름을 입력해주세요.");
         return;
@@ -115,17 +268,20 @@
       if (unavailable[key]?.[personKey]) {
         remove(path);
       } else {
-        set(path, { name, createdAt: Date.now() });
+        set(path, {
+          name,
+          createdAt: Date.now()
+        });
       }
     }
 
     function render() {
       calendar.innerHTML = "";
 
-      weekNames.forEach(w => {
+      weekNames.forEach(dayName => {
         const el = document.createElement("div");
         el.className = "day-name";
-        el.textContent = w;
+        el.textContent = dayName;
         calendar.appendChild(el);
       });
 
@@ -173,6 +329,7 @@
           <td>${names.length}명</td>
           <td>${names.length ? names.join(", ") : "-"}</td>
         `;
+
         summary.appendChild(tr);
       }
     }
