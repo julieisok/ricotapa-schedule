@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>2026년 5월 근무불가일 취합</title>
+  <title>2026년 6월 근무불가일 취합</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -39,7 +39,7 @@
       margin-bottom: 8px;
     }
 
-    input {
+    input[type="text"] {
       box-sizing: border-box;
       padding: 12px;
       border: 1px solid #ddd;
@@ -63,6 +63,60 @@
       padding: 8px 10px;
       border-radius: 8px;
       margin-top: 10px;
+    }
+
+    .available-box {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      border-radius: 12px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      margin: 0;
+    }
+
+    .check-row input {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
+    }
+
+    .submit-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 12px;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 14px;
+      font-size: 16px;
+      font-weight: 800;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .status {
+      font-size: 13px;
+      color: #2563eb;
+      font-weight: 700;
+      margin-top: 8px;
+      min-height: 18px;
     }
 
     .calendar {
@@ -95,6 +149,10 @@
       background: #eff6ff;
     }
 
+    .day.saved {
+      border-color: #93c5fd;
+    }
+
     .date {
       font-weight: 700;
       margin-bottom: 4px;
@@ -112,6 +170,16 @@
       background: transparent;
       border: none;
       cursor: default;
+    }
+
+    .submitted-list {
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
     }
 
     .table-wrap {
@@ -170,15 +238,30 @@
 </head>
 
 <body>
-  <h1>2026년 5월 근무불가일 취합</h1>
+  <h1>2026년 6월 근무불가일 취합</h1>
+  <div class="submitted-list" id="submittedList">근무표 제출명단 : -</div>
   <div class="box">
     <label>주의사항</label>
-    <p class="danger">근무 불가일은 꼭 필요한 일정만 제출해주세요! 제출 후 전체 현황을 반영해 특정 날짜에 신청이 몰릴 경우 일부 조정될 수 있어요.</p> 
-    </div>
+    <p class="danger">근무 불가일은 꼭 필요한 일정만 제출해주세요! 제출 후 전체 현황을 반영해 특정 날짜에 신청이 몰릴 경우 일부 조정될 수 있어요.</p>
+  </div>
+
   <div class="box">
     <label for="nameInput">이름 입력</label>
-    <input id="nameInput" placeholder="예: 한주리" />
-    <p class="hint">이름을 입력한 뒤 날짜를 클릭하면 근무불가일로 등록/해제됩니다.</p>
+    <input id="nameInput" type="text" placeholder="예: 한주리" />
+    <p class="hint">이름을 입력한 뒤 날짜를 클릭하면 근무불가일로 임시 선택됩니다. 최종 반영은 아래 제출 버튼을 눌렀을 때만 저장됩니다.</p>
+
+    <div class="available-box">
+      <label class="check-row" for="allAvailableInput">
+        <input id="allAvailableInput" type="checkbox" />
+        <span>모든 일자 근무 가능합니다</span>
+      </label>
+      <p class="hint">체크 후 제출하면 근무불가일 없이 제출명단에 이름이 반영됩니다.</p>
+    </div>
+
+    <div class="submit-row">
+      <button id="submitButton" type="button">제출하기</button>
+    </div>
+    <div class="status" id="submitStatus"></div>
     <p class="danger">입력한 내용은 모든 사용자가 함께 볼 수 있습니다.</p>
   </div>
 
@@ -188,6 +271,7 @@
 
   <div class="box">
     <h2>날짜별 취합표</h2>
+   
     <div class="table-wrap">
       <table>
         <thead>
@@ -222,26 +306,27 @@
     appId: "1:866669831734:web:13feb9632867811b409a97"
   };
 
-
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
     const YEAR = 2026;
-    const MONTH = 5;
-    const DAYS = 31;
+    const MONTH = 6;
+    const DAYS = 30;
+    const BASE_PATH = "schedule_2026_06";
 
     const calendar = document.getElementById("calendar");
     const summary = document.getElementById("summary");
     const nameInput = document.getElementById("nameInput");
+    const allAvailableInput = document.getElementById("allAvailableInput");
+    const submitButton = document.getElementById("submitButton");
+    const submitStatus = document.getElementById("submitStatus");
+    const submittedList = document.getElementById("submittedList");
 
     nameInput.value = localStorage.getItem("workerName") || "";
 
-    nameInput.addEventListener("input", () => {
-      localStorage.setItem("workerName", nameInput.value.trim());
-      render();
-    });
-
     let unavailable = {};
+    let submissions = {};
+    let draftUnavailableDays = new Set();
 
     const weekNames = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -253,6 +338,51 @@
       return name.replace(/[.#$/[\]]/g, "_");
     }
 
+    function setStatus(message) {
+      submitStatus.textContent = message;
+      if (message) {
+        window.setTimeout(() => {
+          if (submitStatus.textContent === message) submitStatus.textContent = "";
+        }, 2500);
+      }
+    }
+
+    function loadSavedSubmissionToDraft() {
+      const name = nameInput.value.trim();
+      const personKey = safeName(name);
+      draftUnavailableDays = new Set();
+      allAvailableInput.checked = false;
+
+      if (!name || !submissions[personKey]) {
+        render();
+        return;
+      }
+
+      const saved = submissions[personKey];
+      allAvailableInput.checked = !!saved.allAvailable;
+
+      Object.entries(unavailable).forEach(([key, people]) => {
+        if (people?.[personKey]) {
+          const day = Number(key.slice(-2));
+          if (!Number.isNaN(day)) draftUnavailableDays.add(day);
+        }
+      });
+
+      render();
+    }
+
+    nameInput.addEventListener("input", () => {
+      localStorage.setItem("workerName", nameInput.value.trim());
+      loadSavedSubmissionToDraft();
+    });
+
+    allAvailableInput.addEventListener("change", () => {
+      if (allAvailableInput.checked) {
+        draftUnavailableDays.clear();
+      }
+      render();
+    });
+
     function toggleDay(day) {
       const name = nameInput.value.trim();
 
@@ -261,19 +391,69 @@
         return;
       }
 
-      const key = dateKey(day);
-      const personKey = safeName(name);
-      const path = ref(db, `unavailable/${key}/${personKey}`);
+      if (allAvailableInput.checked) {
+        allAvailableInput.checked = false;
+      }
 
-      if (unavailable[key]?.[personKey]) {
-        remove(path);
+      if (draftUnavailableDays.has(day)) {
+        draftUnavailableDays.delete(day);
       } else {
-        set(path, {
+        draftUnavailableDays.add(day);
+      }
+
+      render();
+    }
+
+    async function submitSchedule() {
+      const name = nameInput.value.trim();
+
+      if (!name) {
+        alert("먼저 이름을 입력해주세요.");
+        return;
+      }
+
+      const personKey = safeName(name);
+      const allAvailable = allAvailableInput.checked;
+      const submittedAt = Date.now();
+
+      submitButton.disabled = true;
+      submitButton.textContent = "제출 중...";
+
+      try {
+        const removeTasks = [];
+        for (let day = 1; day <= DAYS; day++) {
+          removeTasks.push(remove(ref(db, `${BASE_PATH}/unavailable/${dateKey(day)}/${personKey}`)));
+        }
+        await Promise.all(removeTasks);
+
+        if (!allAvailable) {
+          const saveTasks = [...draftUnavailableDays].map(day =>
+            set(ref(db, `${BASE_PATH}/unavailable/${dateKey(day)}/${personKey}`), {
+              name,
+              createdAt: submittedAt
+            })
+          );
+          await Promise.all(saveTasks);
+        }
+
+        await set(ref(db, `${BASE_PATH}/submissions/${personKey}`), {
           name,
-          createdAt: Date.now()
+          allAvailable,
+          unavailableDays: allAvailable ? [] : [...draftUnavailableDays].sort((a, b) => a - b),
+          submittedAt
         });
+
+        setStatus("제출되었습니다.");
+      } catch (error) {
+        console.error(error);
+        alert("제출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "제출하기";
       }
     }
+
+    submitButton.addEventListener("click", submitSchedule);
 
     function render() {
       calendar.innerHTML = "";
@@ -299,10 +479,11 @@
         const key = dateKey(day);
         const people = unavailable[key] || {};
         const names = Object.values(people).map(v => v.name);
-        const selected = currentName && people[currentName];
+        const selected = draftUnavailableDays.has(day);
+        const saved = currentName && people[currentName];
 
         const el = document.createElement("div");
-        el.className = `day ${selected ? "selected" : ""}`;
+        el.className = `day ${selected ? "selected" : ""} ${saved ? "saved" : ""}`;
         el.onclick = () => toggleDay(day);
 
         el.innerHTML = `
@@ -314,6 +495,16 @@
       }
 
       renderSummary();
+      renderSubmittedList();
+    }
+
+    function renderSubmittedList() {
+      const names = Object.values(submissions || {})
+        .map(v => v.name)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, "ko"));
+
+      submittedList.textContent = `근무표 제출명단 : ${names.length ? names.join(", ") : "-"}`;
     }
 
     function renderSummary() {
@@ -325,7 +516,7 @@
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>2026-05-${String(day).padStart(2, "0")}</td>
+          <td>2026-06-${String(day).padStart(2, "0")}</td>
           <td>${names.length}명</td>
           <td>${names.length ? names.join(", ") : "-"}</td>
         `;
@@ -334,9 +525,14 @@
       }
     }
 
-    onValue(ref(db, "unavailable"), snapshot => {
+    onValue(ref(db, `${BASE_PATH}/unavailable`), snapshot => {
       unavailable = snapshot.val() || {};
-      render();
+      loadSavedSubmissionToDraft();
+    });
+
+    onValue(ref(db, `${BASE_PATH}/submissions`), snapshot => {
+      submissions = snapshot.val() || {};
+      loadSavedSubmissionToDraft();
     });
   </script>
 </body>
