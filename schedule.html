@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>2026년 6월 근무불가일 취합</title>
+  <title>2026년 7월 근무불가일 취합</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -238,7 +238,7 @@
 </head>
 
 <body>
-  <h1>리코타파 2026년 6월 주말 근무 취합</h1>
+  <h1>리코타파 2026년 7월 주말 근무 취합</h1>
   <div class="submitted-list" id="submittedList">제출한 사람 : -</div>
   <div class="box">
     <label>주의사항</label>
@@ -310,9 +310,9 @@
     const db = getDatabase(app);
 
     const YEAR = 2026;
-    const MONTH = 6;
-    const DAYS = 30;
-    const BASE_PATH = "schedule_2026_06";
+    const MONTH = 7;
+    const DAYS = 31;
+    const BASE_PATH = "schedule_2026_07";
 
     const calendar = document.getElementById("calendar");
     const summary = document.getElementById("summary");
@@ -516,7 +516,7 @@
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>2026-06-${String(day).padStart(2, "0")}</td>
+          <td>2026-07-${String(day).padStart(2, "0")}</td>
           <td>${names.length}명</td>
           <td>${names.length ? names.join(", ") : "-"}</td>
         `;
